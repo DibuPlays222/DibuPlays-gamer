@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DibuPlaysAI — Your Playful AI Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0a1a; --fg:#f1edf9; --muted:#9b95b5;
+    --card:rgba(24,20,42,.7); --border:rgba(160,120,255,.18);
+    --primary:#c44bff; --accent:#33b9ff;
+    --gradient:linear-gradient(135deg,#c44bff,#33b9ff);
+    --glow:0 0 60px rgba(196,75,255,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Inter',system-ui,sans-serif;color:var(--fg);
+    background:
+      radial-gradient(ellipse at top,rgba(120,60,200,.35),transparent 60%),
+      radial-gradient(ellipse at bottom,rgba(40,120,200,.3),transparent 60%),
+      var(--bg);
+    background-attachment:fixed;min-height:100vh;display:flex;flex-direction:column;
+  }
+  h1,h2{font-family:'Space Grotesk',sans-serif;letter-spacing:-.02em}
+  .gradient-text{background:var(--gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
+  header,footer{
+    position:sticky;background:rgba(12,10,26,.5);backdrop-filter:blur(20px);
+    border-color:var(--border);z-index:10;
+  }
+  header{top:0;border-bottom:1px solid var(--border)}
+  footer{bottom:0;border-top:1px solid var(--border)}
+  .container{max-width:760px;margin:0 auto;padding:16px;width:100%}
+  .head-row{display:flex;justify-content:space-between;align-items:center}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-badge{
+    width:42px;height:42px;border-radius:14px;background:var(--gradient);
+    display:flex;align-items:center;justify-content:center;box-shadow:var(--glow);font-size:20px;
+  }
+  .logo h1{font-size:20px;line-height:1}
+  .logo p{font-size:12px;color:var(--muted);margin-top:4px}
+  .status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .dot-online{width:8px;height:8px;border-radius:999px;background:var(--accent);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  main{flex:1;overflow-y:auto}
+  .messages{display:flex;flex-direction:column;gap:18px;padding:32px 16px}
+
+  .welcome{text-align:center;padding:48px 8px;display:flex;flex-direction:column;gap:20px;align-items:center}
+  .welcome-badge{width:80px;height:80px;border-radius:24px;background:var(--gradient);display:flex;align-items:center;justify-content:center;box-shadow:var(--glow);font-size:38px}
+  .welcome h2{font-size:38px}
+  .welcome p{color:var(--muted);font-size:17px}
+  .suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+  .suggestion{
+    padding:9px 16px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(24,20,42,.4);color:var(--fg);font-size:14px;cursor:pointer;
+    backdrop-filter:blur(8px);transition:.2s;
+  }
+  .suggestion:hover{border-color:var(--primary);color:var(--primary)}
+
+  .msg{display:flex}
+  .msg.user{justify-content:flex-end}
+  .bubble{
+    max-width:85%;padding:12px 18px;border-radius:18px;line-height:1.55;
+    word-wrap:break-word;overflow-wrap:break-word;
+  }
+  .msg.user .bubble{background:var(--gradient);color:#fff;border-bottom-right-radius:4px}
+  .msg.assistant .bubble{
+    background:var(--card);backdrop-filter:blur(8px);
+    border:1px solid var(--border);border-bottom-left-radius:4px;
+  }
+  .bubble p{margin:6px 0}
+  .bubble code{background:rgba(0,0,0,.4);padding:2px 6px;border-radius:6px;font-size:.9em}
+  .bubble pre{background:rgba(0,0,0,.5);border:1px solid var(--border);padding:12px;border-radius:10px;overflow-x:auto;margin:8px 0}
+  .bubble pre code{background:transparent;padding:0}
+  .bubble a{color:var(--accent)}
+  .bubble ul,.bubble ol{padding-left:22px;margin:6px 0}
+
+  .typing{display:flex;gap:6px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;width:fit-content}
+  .typing span{width:8px;height:8px;border-radius:999px;background:var(--primary);animation:bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.15s}
+  .typing span:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+  .composer{
+    display:flex;align-items:flex-end;gap:8px;padding:8px;
+    background:var(--card);border:1px solid var(--border);border-radius:18px;
+    backdrop-filter:blur(8px);transition:border-color .2s;
+  }
+  .composer:focus-within{border-color:var(--primary)}
+  textarea{
+    flex:1;background:transparent;border:none;outline:none;resize:none;
+    color:var(--fg);font:inherit;padding:10px 12px;max-height:160px;
+  }
+  textarea::placeholder{color:var(--muted)}
+  .send{
+    width:42px;height:42px;border-radius:12px;border:none;cursor:pointer;
+    background:var(--gradient);color:#fff;display:flex;align-items:center;justify-content:center;
+    transition:.2s;flex-shrink:0;
+  }
+  .send:disabled{opacity:.4;cursor:not-allowed}
+  .send:not(:disabled):hover{transform:scale(1.05)}
+  .footer-note{text-align:center;font-size:12px;color:var(--muted);margin-top:8px}
+
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-thumb{background:rgba(196,75,255,.4);border-radius:999px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container head-row">
+    <div class="logo">
+      <div class="logo-badge">🎮</div>
+      <div>
+        <h1 class="gradient-text">DibuPlaysAI</h1>
+        <p>Your playful AI companion</p>
+      </div>
+    </div>
+    <div class="status"><span class="dot-online"></span>Online</div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-badge">✨</div>
+        <div>
+          <h2 class="gradient-text">Hey, I'm DibuPlaysAI</h2>
+          <p>Ask me anything — gaming, code, ideas, or just say hi.</p>
+        </div>
+        <div class="suggestions">
+          <button class="suggestion">Who are you?</button>
+          <button class="suggestion">Suggest a fun indie game</button>
+          <button class="suggestion">Help me debug a JS bug</button>
+          <button class="suggestion">Tell me a gaming joke</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <form class="composer" id="form">
+      <textarea id="input" rows="1" placeholder="Message DibuPlaysAI..."></textarea>
+      <button class="send" id="send" type="submit" aria-label="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+      </button>
+    </form>
+    <p class="footer-note">Powered by Lovable AI · DibuPlaysAI © 2026</p>
+  </div>
+</footer>
+
+<script>
+  // ====== CONFIG (already wired to your project) ======
+  const SUPABASE_URL = "https://rgsfgoawogrifqpxdnww.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnc2Znb2F3b2dyaWZxcHhkbnd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzEwODcsImV4cCI6MjA5MzEwNzA4N30.StEVVHBZ7FWD6UhwJTh6G9lABbtJyHNxP9_H2LiytE8";
+  const CHAT_URL = `${SUPABASE_URL}/functions/v1/chat`;
+  // =====================================================
+
+  const messagesEl = document.getElementById("messages");
+  const welcomeEl  = document.getElementById("welcome");
+  const form       = document.getElementById("form");
+  const input      = document.getElementById("input");
+  const sendBtn    = document.getElementById("send");
+  const mainEl     = document.getElementById("main");
+
+  const history = []; // {role, content}
+  let isLoading = false;
+
+  document.querySelectorAll(".suggestion").forEach(b =>
+    b.addEventListener("click", () => send(b.textContent))
+  );
+
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    sendBtn.disabled = !input.value.trim() || isLoading;
+  });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  form.addEventListener("submit", e => { e.preventDefault(); send(); });
+  sendBtn.disabled = true;
+
+  function addBubble(role, content="") {
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + role;
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    if (role === "assistant") bubble.innerHTML = marked.parse(content || "");
+    else bubble.textContent = content;
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    scrollDown();
+    return bubble;
+  }
+  function showTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "msg assistant";
+    wrap.id = "typing";
+    wrap.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    messagesEl.appendChild(wrap);
+    scrollDown();
+  }
+  function hideTyping(){ document.getElementById("typing")?.remove(); }
+  function scrollDown(){ mainEl.scrollTo({top: mainEl.scrollHeight, behavior:"smooth"}); }
+
+  async function send(textOverride) {
+    const text = (textOverride ?? input.value).trim();
+    if (!text || isLoading) return;
+    welcomeEl?.remove();
+    input.value = ""; input.style.height = "auto";
+    isLoading = true; sendBtn.disabled = true;
+
+    addBubble("user", text);
+    history.push({ role:"user", content:text });
+    showTyping();
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "apikey": SUPABASE_KEY,
+        },
+        body: JSON.stringify({ messages: history }),
+      });
+
+      if (resp.status === 429) { hideTyping(); addBubble("assistant","⚠️ Rate limit hit. Try again in a moment."); return done(); }
+      if (resp.status === 402) { hideTyping(); addBubble("assistant","⚠️ AI credits exhausted. Add credits in Lovable settings."); return done(); }
+      if (!resp.ok || !resp.body) { hideTyping(); addBubble("assistant","⚠️ Something went wrong."); return done(); }
+
+      hideTyping();
+      const bubble = addBubble("assistant","");
+      let assistant = "";
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "", streamDone = false;
+
+      while (!streamDone) {
+        const { done:rDone, value } = await reader.read();
+        if (rDone) break;
+        buffer += decoder.decode(value, { stream:true });
+        let idx;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0,-1);
+          if (!line || line.startsWith(":")) continue;
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              assistant += delta;
+              bubble.innerHTML = marked.parse(assistant);
+              scrollDown();
+            }
+          } catch { buffer = line + "\n" + buffer; break; }
+        }
+      }
+      history.push({ role:"assistant", content: assistant });
+    } catch (err) {
+      console.error(err);
+      hideTyping();
+      addBubble("assistant","⚠️ Network error. Please try again.");
+    } finally { done(); }
+  }
+  function done(){ isLoading = false; sendBtn.disabled = !input.value.trim(); input.focus(); }
+</script>
+</body>
+</html>
